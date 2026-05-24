@@ -45,12 +45,36 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <el-card v-if="myResults.length" shadow="hover" style="margin-top:20px">
+      <template #header>我的答题记录</template>
+      <el-table :data="myResults" size="small">
+        <el-table-column prop="score" label="得分" width="120">
+          <template #default="{ row }">
+            <span :style="{ color: row.score / row.total_score >= 0.8 ? '#67c23a' : row.score / row.total_score >= 0.6 ? '#e6a23c' : '#f56c6c', fontWeight: 'bold' }">
+              {{ row.score }} / {{ row.total_score }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="correct_count" label="正确" width="120">
+          <template #default="{ row }">{{ row.correct_count }} / {{ row.total_count }} 题</template>
+        </el-table-column>
+        <el-table-column label="时间" width="180">
+          <template #default="{ row }">{{ new Date(row.created_at).toLocaleString('zh-CN') }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button size="small" @click="$router.push(`/exams/${row.exam_id}`)">查看试卷</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getExams, getQuestions } from '../api'
+import { getExams, getStats, getMyResults } from '../api'
 
 const stats = ref([
   { label: '题库总量', value: 0, icon: 'Collection' },
@@ -60,23 +84,28 @@ const stats = ref([
 ])
 
 const recentExams = ref([])
+const myResults = ref([])
 
 onMounted(async () => {
   try {
-    const [qRes, eRes] = await Promise.allSettled([
-      getQuestions({ page_size: 1 }),
+    const [sRes, eRes, rRes] = await Promise.allSettled([
+      getStats(),
       getExams(),
+      getMyResults(),
     ])
 
-    if (qRes.status === 'fulfilled') {
-      stats.value[0].value = qRes.value.data.total
+    if (sRes.status === 'fulfilled') {
+      const d = sRes.value.data
+      stats.value[0].value = d.total_questions
+      stats.value[1].value = d.ai_generated
+      stats.value[3].value = d.today_new
     }
     if (eRes.status === 'fulfilled') {
       stats.value[2].value = eRes.value.data.total
-    }
-
-    if (eRes.status === 'fulfilled') {
       recentExams.value = eRes.value.data.items.slice(0, 5)
+    }
+    if (rRes.status === 'fulfilled') {
+      myResults.value = rRes.value.data.items.slice(0, 10)
     }
   } catch (e) {
     // Backend not reachable — display zeros

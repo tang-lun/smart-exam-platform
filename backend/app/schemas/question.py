@@ -14,6 +14,8 @@ class QuestionGenerateRequest(BaseModel):
     def validate_count_by_type(self):
         if self.question_type == "proof" and self.count > 3:
             raise ValueError("证明题单次最多生成 3 道，请分次生成")
+        if self.question_type == "calculation" and self.count > 5:
+            raise ValueError("计算题单次最多生成 5 道，请分次生成")
         return self
 
 
@@ -29,9 +31,40 @@ class QuestionResponse(BaseModel):
     answer: str
     answer_analysis: str | None = None
     source: str
+    is_favorited: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_question(cls, q, user_id: int | None = None):
+        """从 ORM 对象构建响应，自动计算当前用户的收藏状态。"""
+        return cls(
+            id=q.id,
+            type=q.type.value if hasattr(q.type, 'value') else str(q.type),
+            subject=q.subject,
+            grade_level=q.grade_level,
+            knowledge_points=q.knowledge_points or [],
+            difficulty=q.difficulty.value if hasattr(q.difficulty, 'value') else str(q.difficulty),
+            stem=q.stem,
+            options=q.options,
+            answer=q.answer,
+            answer_analysis=q.answer_analysis,
+            source=q.source.value if hasattr(q.source, 'value') else str(q.source),
+            is_favorited=(user_id in (q.favorited_by or [])) if user_id else False,
+            created_at=q.created_at,
+        )
+
+
+class QuestionManualCreate(BaseModel):
+    type: str = Field(..., description="题型: choice / fill_blank / calculation / proof")
+    grade_level: str = Field(default="grade_7")
+    knowledge_points: list[str] = Field(..., min_length=1)
+    difficulty: str = Field(default="medium")
+    stem: str = Field(..., min_length=1, description="题干")
+    options: list[str] | None = Field(None, description="选项列表（选择题必填）")
+    answer: str = Field(..., min_length=1)
+    answer_analysis: str | None = None
 
 
 class QuestionUpdateRequest(BaseModel):

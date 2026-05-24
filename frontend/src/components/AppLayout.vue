@@ -20,6 +20,10 @@
           <el-icon><MagicStick /></el-icon>
           <span>AI 出题</span>
         </el-menu-item>
+        <el-menu-item index="/favorites">
+          <el-icon><Star /></el-icon>
+          <span>我的收藏</span>
+        </el-menu-item>
         <el-menu-item index="/questions">
           <el-icon><Collection /></el-icon>
           <span>题库管理</span>
@@ -37,6 +41,22 @@
     <el-container>
       <el-header class="topbar">
         <h2 class="page-title">{{ $route.meta.title }}</h2>
+        <div style="flex:1" />
+        <el-dropdown trigger="click" @command="handleCommand">
+          <span class="user-area">
+            <el-icon style="margin-right:4px"><UserFilled /></el-icon>
+            {{ auth.username }}
+            <el-icon><ArrowDown /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="logout">
+                <el-icon><SwitchButton /></el-icon>
+                退出登录
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </el-header>
       <el-main class="main-content">
         <router-view />
@@ -47,10 +67,20 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 const activeMenu = computed(() => route.path)
+
+function handleCommand(cmd) {
+  if (cmd === 'logout') {
+    auth.logout()
+    router.push('/login')
+  }
+}
 </script>
 
 <style>
@@ -111,6 +141,17 @@ body {
   padding: 0 24px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   height: 56px;
+}
+
+.user-area {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #606266;
+  font-size: 14px;
+}
+.user-area:hover {
+  color: #409eff;
 }
 
 .page-title {

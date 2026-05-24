@@ -1,0 +1,29 @@
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - app-data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/app.db
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      - AI_MODEL=${AI_MODEL:-deepseek-chat}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  app-data:

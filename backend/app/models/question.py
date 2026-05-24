@@ -40,6 +40,8 @@ class Question(Base):
     answer: Mapped[str] = mapped_column(Text, nullable=False)
     answer_analysis: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[QuestionSource] = mapped_column(Enum(QuestionSource), default=QuestionSource.ai_generated)
+    owner_id: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    favorited_by: Mapped[list] = mapped_column(JSON, default=list, comment="收藏该题目的用户ID列表")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

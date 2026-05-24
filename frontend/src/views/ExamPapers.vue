@@ -11,7 +11,9 @@
       </template>
 
       <el-table :data="exams" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column label="#" width="60" align="center">
+          <template #default="{ $index }">{{ $index + 1 }}</template>
+        </el-table-column>
         <el-table-column prop="title" label="试卷名称" min-width="250" />
         <el-table-column label="题量" width="80">
           <template #default="{ row }">{{ row.question_ids?.length || 0 }} 题</template>

@@ -85,13 +85,7 @@ import { ref, computed, watch } from 'vue'
 import { generateQuestions } from '../api'
 import { ElMessage } from 'element-plus'
 import QuestionCard from '../components/QuestionCard.vue'
-
-const knowledgeOptions = [
-  '一元一次方程', '二元一次方程组', '一元二次方程', '不等式', '整式', '分式',
-  '勾股定理', '三角形', '四边形', '圆', '相似三角形', '解直角三角形',
-  '一次函数', '二次函数', '反比例函数', '统计', '概率',
-  '实数', '代数式', '因式分解', '平行线', '全等三角形',
-]
+import { GRADE_KNOWLEDGE } from '../constants'
 
 const form = ref({
   knowledge_points: [],
@@ -101,10 +95,22 @@ const form = ref({
   grade_level: 'grade_7',
 })
 
-const maxCount = computed(() => form.value.question_type === 'proof' ? 3 : 10)
+const knowledgeOptions = computed(() => GRADE_KNOWLEDGE[form.value.grade_level] || [])
+
+// 切换年级时清空知识点
+watch(() => form.value.grade_level, () => {
+  form.value.knowledge_points = []
+})
+
+const maxCount = computed(() => {
+  if (form.value.question_type === 'proof') return 3
+  if (form.value.question_type === 'calculation') return 5
+  return 10
+})
 
 watch(() => form.value.question_type, (t) => {
   if (t === 'proof' && form.value.count > 3) form.value.count = 3
+  if (t === 'calculation' && form.value.count > 5) form.value.count = 5
 })
 
 const loading = ref(false)

@@ -5,6 +5,7 @@
         <span class="card-index">第 {{ index }} 题</span>
         <el-tag size="small">{{ typeLabel(question.type) }}</el-tag>
         <el-tag size="small" :type="diffType(question.difficulty)">{{ diffLabel(question.difficulty) }}</el-tag>
+        <span v-if="score" class="card-score">{{ score }} 分</span>
         <div class="kp-tags">
           <el-tag
             v-for="kp in (question.knowledge_points || [])"
@@ -15,31 +16,34 @@
         </div>
       </div>
     </template>
-    <div class="stem">{{ question.stem }}</div>
+    <div class="stem" v-html="renderMath(question.stem)"></div>
 
     <div v-if="question.options?.length" class="options">
-      <div v-for="(opt, i) in question.options" :key="i" class="option-item">{{ opt }}</div>
+      <div v-for="(opt, i) in question.options" :key="i" class="option-item" v-html="renderMath(opt)"></div>
     </div>
 
     <template v-if="showAnswer">
       <el-divider />
       <div class="answer-section">
         <div class="answer-label">答案：</div>
-        <div class="answer-content">{{ question.answer }}</div>
+        <div class="answer-content" v-html="renderMath(question.answer)"></div>
       </div>
       <div v-if="question.answer_analysis" class="analysis-section">
         <div class="analysis-label">解析：</div>
-        <div class="analysis-content">{{ question.answer_analysis }}</div>
+        <div class="analysis-content" v-html="renderMath(question.answer_analysis)"></div>
       </div>
     </template>
   </el-card>
 </template>
 
 <script setup>
+import { renderMath } from '../utils/math'
+
 const props = defineProps({
   question: { type: Object, required: true },
   index: { type: Number, default: 1 },
   showAnswer: { type: Boolean, default: false },
+  score: { type: Number, default: 0 },
 })
 
 function typeLabel(type) {
@@ -56,6 +60,8 @@ function diffType(d) {
   const map = { easy: 'success', medium: 'warning', hard: 'danger' }
   return map[d] || 'info'
 }
+
+// renderMath imported from ../utils/math
 </script>
 
 <style scoped>
@@ -74,6 +80,15 @@ function diffType(d) {
   color: #409eff;
 }
 
+.card-score {
+  font-weight: 600;
+  color: #e6a23c;
+  font-size: 13px;
+  margin-left: auto;
+  margin-right: 12px;
+  white-space: nowrap;
+}
+
 .kp-tags {
   margin-left: auto;
   display: flex;
@@ -84,6 +99,10 @@ function diffType(d) {
   font-size: 16px;
   line-height: 1.8;
   color: #303133;
+}
+
+.stem :deep(.katex) {
+  font-size: 1.1em;
 }
 
 .options {

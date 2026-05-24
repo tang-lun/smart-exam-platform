@@ -1,4 +1,5 @@
 """种子数据生成：为初一数学生成覆盖 4题型×3难度 的均衡题库。"""
+import os
 import sys
 from app.db.database import SessionLocal, Base, engine
 from app.models.question import Question, QuestionType, Difficulty, QuestionSource
@@ -19,13 +20,17 @@ TOPICS_POOL = [
     "实数", "平面直角坐标系", "数据的收集与整理", "统计与概率",
 ]
 
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
+ADMIN_USERNAME = os.getenv("SEED_ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("SEED_ADMIN_PASSWORD", "")
 
 
 def _get_or_create_admin(db):
     admin = db.query(User).filter(User.username == ADMIN_USERNAME).first()
     if admin is None:
+        if not ADMIN_PASSWORD:
+            raise RuntimeError(
+                "未设置管理员密码。请设置环境变量 SEED_ADMIN_PASSWORD 后重试。"
+            )
         admin = User(
             username=ADMIN_USERNAME,
             password_hash=hash_password(ADMIN_PASSWORD),
@@ -34,7 +39,7 @@ def _get_or_create_admin(db):
         db.add(admin)
         db.commit()
         db.refresh(admin)
-        print(f"已创建管理员账户: {ADMIN_USERNAME} / {ADMIN_PASSWORD}")
+        print(f"已创建管理员账户: {ADMIN_USERNAME}")
     return admin
 
 
